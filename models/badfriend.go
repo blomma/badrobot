@@ -56,7 +56,7 @@ func GetAllBadFriends() ([]*BadFriend, error) {
 
 	badfriends := make([]*BadFriend, len(ids))
 	for i, value := range replyBadfriends {
-		badfriend := &BadFriend{}
+		badfriend := new(BadFriend)
 		if err := json.Unmarshal(value, badfriend); err != nil {
 			return nil, err
 		}
