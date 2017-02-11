@@ -49,15 +49,15 @@ function initMap() {
 			position: new google.maps.LatLng(location.latitude, location.longitude),
 			map: map,
 			icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 5,
-                fillColor: 'red',
-                fillOpacity: .2,
-                strokeColor: 'white',
-                strokeWeight: .5
-            }
-        });
-    });
+				path: google.maps.SymbolPath.CIRCLE,
+				scale: 5,
+				fillColor: 'red',
+				fillOpacity: .2,
+				strokeColor: 'white',
+				strokeWeight: .5
+			}
+		});
+	});
 }
 </script>
 <script async defer
