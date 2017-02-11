@@ -37,30 +37,27 @@ body {
 <div id="map"></div>
 <script>
 function initMap() {
-	var data = {{.BadFriends}}
+	var badFriendsData = {{.BadFriends}}
 	var map = new google.maps.Map(document.getElementById('map'), {
 		zoom: 1,
 		center: new google.maps.LatLng(2.8, -187.3),
 		mapTypeId: 'terrain'
 	});
 
-	for (var i = 0; i < t.length; i++) {
-        var c = t[i];
-
-        var latLng = new google.maps.LatLng(c.latitude, c.longitude);
-        var marker = new google.maps.Marker({
-            position: latLng,
-            map: map,
-            icon: {
+	var markers = badFriendsData.map(function(location, i) {
+		return new google.maps.Marker({
+			position: new google.maps.LatLng(location.latitude, location.longitude),
+			map: map,
+			icon: {
                 path: google.maps.SymbolPath.CIRCLE,
-                scale: 15,
+                scale: 5,
                 fillColor: 'red',
                 fillOpacity: .2,
                 strokeColor: 'white',
                 strokeWeight: .5
-            },
+            }
         });
-    }
+    });
 }
 </script>
 <script async defer
