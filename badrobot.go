@@ -2,18 +2,15 @@ package main
 
 import (
 	"encoding/json"
-	"flag"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
+	"net/http/httputil"
 	"time"
 
+	"github.com/NYTimes/gziphandler"
 	"github.com/blomma/badrobot/models"
-	"github.com/gorilla/mux"
-)
-
-var (
-	g_dir = flag.String("dir", ".", "the directory to serve files from. Defaults to the current dir")
 )
 
 const tpl = `
@@ -71,38 +68,47 @@ type Page struct {
 }
 
 func BadFriendsHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-
 	t, err := template.New("badfriends").Parse(tpl)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
+		return
 	}
 
 	badfriends, err := models.GetAllBadFriends()
 	if err != nil {
 		http.Error(w, err.Error(), 500)
+		return
 	}
 
 	jsonBadFriends, err := json.Marshal(badfriends)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
+		return
 	}
 
 	p := Page{BadFriends: template.JS(jsonBadFriends)}
-
 	t.Execute(w, p)
 }
 
-func main() {
-	flag.Parse()
+func logHandler(fn http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		x, err := httputil.DumpRequest(r, true)
+		if err != nil {
+			http.Error(w, fmt.Sprint(err), http.StatusInternalServerError)
+			return
+		}
 
-	r := mux.NewRouter()
-	r.HandleFunc("/badfriends", BadFriendsHandler)
+		log.Println(fmt.Sprintf("%q", x))
+		fn(w, r)
+	}
+}
+
+func main() {
+	http.Handle("/badfriends",
+		gziphandler.GzipHandler(http.HandlerFunc(logHandler(BadFriendsHandler))))
 
 	srv := &http.Server{
-		Handler: r,
-		Addr:    ":8000",
-		// Good practice: enforce timeouts for servers you create!
+		Addr:         ":8000",
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
