@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"html/template"
 	"log"
@@ -20,19 +19,7 @@ type Page struct {
 var g_template *template.Template
 
 func BadFriendsHandler(w http.ResponseWriter, r *http.Request) {
-	badfriends, err := models.GetAllBadFriends()
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-
-	jsonBadFriends, err := json.Marshal(badfriends)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-
-	p := Page{BadFriends: template.JS(jsonBadFriends)}
+	p := Page{BadFriends: template.JS(models.BadFriends.Get())}
 	g_template.Execute(w, p)
 }
 
