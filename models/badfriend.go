@@ -11,25 +11,25 @@ import (
 
 var g_db *pool.Pool
 var g_stopchan = make(chan struct{})
-var BadFriends = &BadFriendsResult{}
+var BadFriends = &badFriendsResult{}
 
-type BadFriend struct {
+type badFriend struct {
 	Latitude  float64 `json:"latitude"`
 	Longitude float64 `json:"longitude"`
 }
 
-type BadFriendsResult struct {
+type badFriendsResult struct {
 	sync.RWMutex
 	value []byte
 }
 
-func (b *BadFriendsResult) Set(value []byte) {
+func (b *badFriendsResult) Set(value []byte) {
 	b.Lock()
 	defer b.Unlock()
 	b.value = value
 }
 
-func (b *BadFriendsResult) Get() []byte {
+func (b *badFriendsResult) Get() []byte {
 	b.RLock()
 	defer b.RUnlock()
 	return b.value
@@ -45,11 +45,10 @@ func init() {
 	go fetchBadFriends(BadFriends)
 }
 
-func fetchBadFriends(b *BadFriendsResult) {
+func fetchBadFriends(b *badFriendsResult) {
 	for {
 		select {
 		default:
-			log.Println("fetching friends")
 			badFriends, err := getAllBadFriends()
 			if err != nil {
 				log.Println(err)
@@ -64,16 +63,14 @@ func fetchBadFriends(b *BadFriendsResult) {
 
 			b.Set(jsonBadFriends)
 		case <-g_stopchan:
-			log.Println("Stopping")
 			return
 		}
 
-		log.Println("Sleeping")
 		time.Sleep(5 * time.Minute)
 	}
 }
 
-func getAllBadFriends() ([]*BadFriend, error) {
+func getAllBadFriends() ([]*badFriend, error) {
 	conn, err := g_db.Get()
 	if err != nil {
 		return nil, err
@@ -94,9 +91,9 @@ func getAllBadFriends() ([]*BadFriend, error) {
 		return nil, err
 	}
 
-	badfriends := make([]*BadFriend, len(ids))
+	badfriends := make([]*badFriend, len(ids))
 	for i, value := range replyBadfriends {
-		badfriend := new(BadFriend)
+		badfriend := new(badFriend)
 		if err := json.Unmarshal(value, badfriend); err != nil {
 			return nil, err
 		}

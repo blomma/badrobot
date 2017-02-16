@@ -18,7 +18,7 @@ type Page struct {
 
 var g_template *template.Template
 
-func BadFriendsHandler(w http.ResponseWriter, r *http.Request) {
+func badFriendsHandler(w http.ResponseWriter, r *http.Request) {
 	p := Page{BadFriends: template.JS(models.BadFriends.Get())}
 	g_template.Execute(w, p)
 }
@@ -32,6 +32,7 @@ func logHandler(fn http.HandlerFunc) http.HandlerFunc {
 		}
 
 		log.Println(fmt.Sprintf("%q", x))
+		defer log.Println("<------")
 		fn(w, r)
 	}
 }
@@ -44,7 +45,7 @@ func init() {
 func main() {
 	http.Handle("/badfriends",
 		gziphandler.GzipHandler(
-			http.HandlerFunc(logHandler(BadFriendsHandler))))
+			http.HandlerFunc(logHandler(badFriendsHandler))))
 
 	srv := &http.Server{
 		Addr:         ":8000",
