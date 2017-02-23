@@ -6,25 +6,28 @@ import (
 	"log"
 	"net/http"
 	"net/http/httputil"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/NYTimes/gziphandler"
 	"github.com/blomma/badrobot/models"
 )
 
-type Page struct {
+type pageBadFriends struct {
 	BadFriends template.JS
 }
 
-var g_template *template.Template
+var templateBadFriends *template.Template
 
 func badFriendsHandler(w http.ResponseWriter, r *http.Request) {
-	p := Page{BadFriends: template.JS(models.BadFriends.Get())}
-	g_template.Execute(w, p)
+	p := pageBadFriends{BadFriends: template.JS(models.BadFriends.Get())}
+	templateBadFriends.Execute(w, p)
 }
 
-func logHandler(fn http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func logHandler(next http.Handler) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) {
 		x, err := httputil.DumpRequest(r, true)
 		if err != nil {
 			http.Error(w, fmt.Sprint(err), http.StatusInternalServerError)
@@ -33,25 +36,34 @@ func logHandler(fn http.HandlerFunc) http.HandlerFunc {
 
 		log.Println(fmt.Sprintf("%q", x))
 		defer log.Println("<------")
-		fn(w, r)
+		next.ServeHTTP(w, r)
 	}
+
+	return http.HandlerFunc(fn)
 }
 
 func init() {
 	filename := "badfriends.html"
-	g_template = template.Must(template.ParseFiles(filename))
+	templateBadFriends = template.Must(template.ParseFiles(filename))
 }
 
 func main() {
-	http.Handle("/badfriends",
-		gziphandler.GzipHandler(
-			http.HandlerFunc(logHandler(badFriendsHandler))))
+	mux := http.NewServeMux()
+	mux.HandleFunc("/badfriends", badFriendsHandler)
 
 	srv := &http.Server{
+		Handler:      gziphandler.GzipHandler(logHandler(mux)),
 		Addr:         ":8000",
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
+
+	c := make(chan os.Signal, 2)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		os.Exit(1)
+	}()
 
 	log.Fatal(srv.ListenAndServe())
 }
