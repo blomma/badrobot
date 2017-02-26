@@ -12,28 +12,40 @@ import (
 var globalPool *pool.Pool
 var globalStopChan = make(chan struct{})
 
-var BadFriends = &badFriendsResult{}
-
-type badFriend struct {
-	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
+func (r *BadFriends) SetResult(value []byte) {
+	r.result.Lock()
+	defer r.result.Unlock()
+	r.result.value = value
 }
 
-type badFriendsResult struct {
+func (r *BadFriends) Result() []byte {
+	r.result.RLock()
+	defer r.result.RUnlock()
+	return r.result.value
+}
+
+type result struct {
 	sync.RWMutex
 	value []byte
 }
 
-func (b *badFriendsResult) Set(value []byte) {
-	b.Lock()
-	defer b.Unlock()
-	b.value = value
+type BadFriends struct {
+	result *result
 }
 
-func (b *badFriendsResult) Get() []byte {
-	b.RLock()
-	defer b.RUnlock()
-	return b.value
+func NewBadFriends() *BadFriends {
+	bf := &BadFriends{
+		result: &result{},
+	}
+
+	go fetchBadFriends(bf)
+
+	return bf
+}
+
+type badFriend struct {
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
 }
 
 func init() {
@@ -43,10 +55,9 @@ func init() {
 	}
 
 	globalPool = localPool
-	go fetchBadFriends(BadFriends)
 }
 
-func fetchBadFriends(b *badFriendsResult) {
+func fetchBadFriends(b *BadFriends) {
 	for {
 		select {
 		default:
@@ -62,7 +73,7 @@ func fetchBadFriends(b *badFriendsResult) {
 				break
 			}
 
-			b.Set(jsonBadFriends)
+			b.SetResult(jsonBadFriends)
 		case <-globalStopChan:
 			return
 		}

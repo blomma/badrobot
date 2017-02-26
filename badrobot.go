@@ -30,10 +30,11 @@ var (
 
 var (
 	templateBadFriends *template.Template
+	badFriendsModel    *models.BadFriends
 )
 
 func badFriendsHandler(w http.ResponseWriter, r *http.Request) {
-	p := pageBadFriends{BadFriends: template.JS(models.BadFriends.Get())}
+	p := pageBadFriends{BadFriends: template.JS(badFriendsModel.Result())}
 	templateBadFriends.Execute(w, p)
 }
 
@@ -62,6 +63,7 @@ func logHandler(next http.Handler) http.Handler {
 func init() {
 	filename := "badfriends.html"
 	templateBadFriends = template.Must(template.ParseFiles(filename))
+	badFriendsModel = models.NewBadFriends()
 }
 
 var flagVersion = flag.Bool("version", false, "Show the version number and information")
