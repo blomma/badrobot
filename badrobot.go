@@ -60,21 +60,20 @@ func logHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(fn)
 }
 
-func init() {
-	filename := "badfriends.html"
-	templateBadFriends = template.Must(template.ParseFiles(filename))
-	badFriendsModel = models.NewBadFriends()
-}
-
 var flagVersion = flag.Bool("version", false, "Show the version number and information")
 
 func main() {
+	flag.Parse()
 	if *flagVersion {
 		fmt.Println("Version:", Version)
 		fmt.Println("Commit hash:", CommitHash)
 		fmt.Println("Compiled on", CompileDate)
 		os.Exit(0)
 	}
+
+	filename := "badfriends.html"
+	templateBadFriends = template.Must(template.ParseFiles(filename))
+	badFriendsModel = models.NewBadFriends()
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/badfriends", badFriendsHandler)
