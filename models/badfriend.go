@@ -9,8 +9,9 @@ import (
 	"github.com/mediocregopher/radix.v2/pool"
 )
 
-var g_db *pool.Pool
-var g_stopchan = make(chan struct{})
+var globalPool *pool.Pool
+var globalStopChan = make(chan struct{})
+
 var BadFriends = &badFriendsResult{}
 
 type badFriend struct {
@@ -36,12 +37,12 @@ func (b *badFriendsResult) Get() []byte {
 }
 
 func init() {
-	db, err := pool.New("tcp", "192.168.1.5:6379", 10)
+	localPool, err := pool.New("tcp", "192.168.1.5:6379", 10)
 	if err != nil {
 		log.Panic(err)
 	}
 
-	g_db = db
+	globalPool = localPool
 	go fetchBadFriends(BadFriends)
 }
 
@@ -62,7 +63,7 @@ func fetchBadFriends(b *badFriendsResult) {
 			}
 
 			b.Set(jsonBadFriends)
-		case <-g_stopchan:
+		case <-globalStopChan:
 			return
 		}
 
@@ -71,11 +72,11 @@ func fetchBadFriends(b *badFriendsResult) {
 }
 
 func getAllBadFriends() ([]*badFriend, error) {
-	conn, err := g_db.Get()
+	conn, err := globalPool.Get()
 	if err != nil {
 		return nil, err
 	}
-	defer g_db.Put(conn)
+	defer globalPool.Put(conn)
 
 	ids, err := conn.Cmd("SMEMBERS", "badfriends").List()
 	if err != nil {

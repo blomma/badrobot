@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"html/template"
 	"log"
@@ -19,11 +20,27 @@ type pageBadFriends struct {
 	BadFriends template.JS
 }
 
-var templateBadFriends *template.Template
+var (
+	// Version is the version number or commit hash
+	// These variables should be set by the linker when compiling
+	Version     = "0.0.0-unknown"
+	CommitHash  = "Unknown"
+	CompileDate = "Unknown"
+)
+
+var (
+	templateBadFriends *template.Template
+)
 
 func badFriendsHandler(w http.ResponseWriter, r *http.Request) {
 	p := pageBadFriends{BadFriends: template.JS(models.BadFriends.Get())}
 	templateBadFriends.Execute(w, p)
+}
+
+func versionHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Version: %v\n", Version)
+	fmt.Fprintf(w, "Commit hash: %v\n", CommitHash)
+	fmt.Fprintf(w, "Compiled on: %v\n", CompileDate)
 }
 
 func logHandler(next http.Handler) http.Handler {
@@ -47,9 +64,19 @@ func init() {
 	templateBadFriends = template.Must(template.ParseFiles(filename))
 }
 
+var flagVersion = flag.Bool("version", false, "Show the version number and information")
+
 func main() {
+	if *flagVersion {
+		fmt.Println("Version:", Version)
+		fmt.Println("Commit hash:", CommitHash)
+		fmt.Println("Compiled on", CompileDate)
+		os.Exit(0)
+	}
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/badfriends", badFriendsHandler)
+	mux.HandleFunc("/version", versionHandler)
 
 	srv := &http.Server{
 		Handler:      gziphandler.GzipHandler(logHandler(mux)),
@@ -64,6 +91,10 @@ func main() {
 		<-c
 		os.Exit(1)
 	}()
+
+	log.Println("Version:", Version)
+	log.Println("Commit hash:", CommitHash)
+	log.Println("Compiled on:", CompileDate)
 
 	log.Fatal(srv.ListenAndServe())
 }
