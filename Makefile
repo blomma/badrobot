@@ -6,5 +6,9 @@ DATE = $(shell go run tools/build-date.go)
 
 build:
 	go build -ldflags "-s -w -X main.Version=$(VERSION) -X main.CommitHash=$(HASH) -X 'main.CompileDate=$(DATE)'" badrobot.go
+
+build-arm:
+	env CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=7 go build -ldflags "-s -w -X main.Version=$(VERSION) -X main.CommitHash=$(HASH) -X 'main.CompileDate=$(DATE)'" badrobot.go
+
 clean:
 	rm -f micro
