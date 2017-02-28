@@ -73,7 +73,8 @@ func main() {
 
 	filename := "badfriends.html"
 	templateBadFriends = template.Must(template.ParseFiles(filename))
-	badFriendsModel = models.NewBadFriends()
+	localBadFriendsModel, stopBadFriends := models.NewBadFriends()
+	badFriendsModel = localBadFriendsModel
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/badfriends", badFriendsHandler)
@@ -90,6 +91,7 @@ func main() {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
+		stopBadFriends()
 		os.Exit(1)
 	}()
 
