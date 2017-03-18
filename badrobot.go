@@ -60,9 +60,12 @@ func logHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(fn)
 }
 
-var flagVersion = flag.Bool("version", false, "Show the version number and information")
+var (
+	flagVersion     = flag.Bool("version", false, "Show the version number and information")
+	flagVersionOnly = flag.Bool("versionOnly", false, "Show only the version number")
+)
 
-func main() {
+func commandLineFlags() {
 	flag.Parse()
 	if *flagVersion {
 		fmt.Println("Version:", Version)
@@ -70,6 +73,15 @@ func main() {
 		fmt.Println("Compiled on", CompileDate)
 		os.Exit(0)
 	}
+
+	if *flagVersionOnly {
+		fmt.Println(Version)
+		os.Exit(0)
+	}
+}
+
+func main() {
+	commandLineFlags()
 
 	filename := "badfriends.html"
 	templateBadFriends = template.Must(template.ParseFiles(filename))
