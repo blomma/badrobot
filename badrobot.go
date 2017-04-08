@@ -45,7 +45,7 @@ func versionHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func logHandler(next http.Handler) http.Handler {
-	fn := func(w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		x, err := httputil.DumpRequest(r, true)
 		if err != nil {
 			http.Error(w, fmt.Sprint(err), http.StatusInternalServerError)
@@ -55,9 +55,7 @@ func logHandler(next http.Handler) http.Handler {
 		log.Println(fmt.Sprintf("%q", x))
 		defer log.Println("<------")
 		next.ServeHTTP(w, r)
-	}
-
-	return http.HandlerFunc(fn)
+	})
 }
 
 var (
