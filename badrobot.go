@@ -3,77 +3,35 @@ package main
 import (
 	"flag"
 	"fmt"
-	"html/template"
 	"log"
 	"net/http"
-	"net/http/httputil"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	"github.com/NYTimes/gziphandler"
-	"github.com/blomma/badrobot/models"
+	"github.com/blomma/badrobot/handlers"
 )
 
-type pageBadFriends struct {
-	BadFriends template.JS
-}
-
+// Version is the version number or commit hash
+// These variables should be set by the linker when compiling
 var (
-	// Version is the version number or commit hash
-	// These variables should be set by the linker when compiling
-	Version     = "0.0.0-unknown"
+	Version     = "0.0.0"
 	CommitHash  = "Unknown"
 	CompileDate = "Unknown"
 )
 
+// Options
 var (
-	templateBadFriends *template.Template
-	badFriendsModel    *models.BadFriends
-)
-
-func badFriendsHandler(w http.ResponseWriter, r *http.Request) {
-	p := pageBadFriends{BadFriends: template.JS(badFriendsModel.Result())}
-	templateBadFriends.Execute(w, p)
-}
-
-func versionHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Version: %v\n", Version)
-	fmt.Fprintf(w, "Commit hash: %v\n", CommitHash)
-	fmt.Fprintf(w, "Compiled on: %v\n", CompileDate)
-}
-
-func logHandler(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		x, err := httputil.DumpRequest(r, true)
-		if err != nil {
-			http.Error(w, fmt.Sprint(err), http.StatusInternalServerError)
-			return
-		}
-
-		log.Println(fmt.Sprintf("%q", x))
-		defer log.Println("<------")
-		next.ServeHTTP(w, r)
-	})
-}
-
-var (
-	flagVersion     = flag.Bool("version", false, "Show the version number and information")
-	flagVersionOnly = flag.Bool("versionOnly", false, "Show only the version number")
+	flagRedis   = flag.String("redis", "", "redis server to hook into")
+	flagVersion = flag.Bool("version", false, "Show the version number and information")
 )
 
 func commandLineFlags() {
 	flag.Parse()
 	if *flagVersion {
 		fmt.Println("Version:", Version)
-		fmt.Println("Commit hash:", CommitHash)
-		fmt.Println("Compiled on", CompileDate)
-		os.Exit(0)
-	}
-
-	if *flagVersionOnly {
-		fmt.Println(Version)
 		os.Exit(0)
 	}
 }
@@ -81,18 +39,13 @@ func commandLineFlags() {
 func main() {
 	commandLineFlags()
 
-	filename := "badfriends.html"
-	templateBadFriends = template.Must(template.ParseFiles(filename))
-	localBadFriendsModel, stopBadFriends := models.NewBadFriends()
-	badFriendsModel = localBadFriendsModel
-
+	badFriendsHandler := handlers.NewBadFriendsHandler(flagRedis)
 	mux := http.NewServeMux()
-	mux.HandleFunc("/badfriends", badFriendsHandler)
-	mux.HandleFunc("/version", versionHandler)
+	mux.HandleFunc("/badfriends", badFriendsHandler.Handler)
 
 	srv := &http.Server{
-		Handler:      gziphandler.GzipHandler(logHandler(mux)),
-		Addr:         ":8000",
+		Handler:      gziphandler.GzipHandler(handlers.LogHandler(mux)),
+		Addr:         ":8001",
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
@@ -101,7 +54,7 @@ func main() {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
-		stopBadFriends()
+		badFriendsHandler.Stop()
 		os.Exit(1)
 	}()
 
