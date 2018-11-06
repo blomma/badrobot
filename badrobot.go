@@ -28,19 +28,15 @@ var (
 	flagVersion = flag.Bool("version", false, "Show the version number and information")
 )
 
-func commandLineFlags() {
+func main() {
 	flag.Parse()
 	if *flagVersion {
 		fmt.Println("Version:", Version)
 		os.Exit(0)
 	}
-}
 
-func main() {
-	commandLineFlags()
-
-	badFriendsHandler := handlers.NewBadFriendsHandler(flagRedis)
 	mux := http.NewServeMux()
+	badFriendsHandler := handlers.NewBadFriendsHandler(flagRedis)
 	mux.HandleFunc("/badfriends", badFriendsHandler.Handler)
 
 	srv := &http.Server{
