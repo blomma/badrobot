@@ -9,9 +9,9 @@ DATE = $(shell go run tools/build-date.go)
 
 # build flags
 BUILD_FLAGS = -ldflags "-s -w \
-	-X main.Version=$(VERSION)" \
+	-X main.Version=$(VERSION) \
 	-X main.CommitHash=$(HASH) \
-	-X 'main.CompileDate=$(DATE)'
+	-X 'main.CompileDate=$(DATE)'"
 
 EXECUTABLE = badrobot
 EXECUTABLES = \
