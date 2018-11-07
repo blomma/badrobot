@@ -40,10 +40,19 @@ clean:
 # Docker
 DOCKER_IMAGE = linux-arm-7-badrobot
 
+docker-clean:
+	docker stop badrobot && docker rm badrobot
+
 docker-build:
 	docker build --pull -t $(DOCKER_IMAGE):$(shell ./bin/linux-arm-7-badrobot --version) .
 
 docker-run:
-	sudo docker run -p 8001:8001 --link redis:redis  --restart always --name badrobot -d $(DOCKER_IMAGE):$(shell ./bin/linux-arm-7-badrobot --version) /linux-arm-7-badrobot --redis redis:6379
+	docker run -p 8001:8001 --link redis:redis  --restart always --name badrobot -d $(DOCKER_IMAGE):$(shell ./bin/linux-arm-7-badrobot --version) /linux-arm-7-badrobot --redis redis:6379
+
+docker-deploy:
+	docker-build
+	docker-clean
+	docker-run
+
 
 .PHONY: clean all
