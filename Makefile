@@ -21,7 +21,8 @@ EXECUTABLES = \
 
 EXECUTABLE_TARGETS = $(EXECUTABLES:%=bin/%)
 
-all: clean
+all:
+    $(MAKE) clean
 	$(MAKE) $(EXECUTABLE_TARGETS)
 
 # arm
@@ -49,9 +50,9 @@ docker-build:
 docker-run:
 	docker run -p 8001:8001 --link redis:redis  --restart always --name badrobot -d $(DOCKER_IMAGE):$(shell ./bin/linux-arm-7-badrobot --version) /linux-arm-7-badrobot --redis redis:6379
 
-docker-deploy:docker-build
-	docker-clean
-	docker-run
-
+docker-deploy:
+    $(MAKE) docker-build
+    $(MAKE) docker-clean
+    $(MAKE) docker-run
 
 .PHONY: clean all
