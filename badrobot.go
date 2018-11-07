@@ -31,7 +31,7 @@ var (
 func main() {
 	flag.Parse()
 	if *flagVersion {
-		fmt.Println("Version:", Version)
+		fmt.Println(Version)
 		os.Exit(0)
 	}
 
