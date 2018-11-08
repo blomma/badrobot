@@ -22,14 +22,11 @@ var (
 	CompileDate = "Unknown"
 )
 
-// Options
-var (
-	flagRedis   = flag.String("redis", "", "redis server to hook into")
-	flagVersion = flag.Bool("version", false, "Show the version number and information")
-)
-
 func main() {
+	flagRedis := flag.String("redis", "", "redis server to hook into")
+	flagVersion := flag.Bool("version", false, "Show the version number and information")
 	flag.Parse()
+
 	if *flagVersion {
 		fmt.Println(Version)
 		os.Exit(0)

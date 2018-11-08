@@ -7,7 +7,7 @@ import (
 	"github.com/blomma/badrobot/models"
 )
 
-type badFriendsHandler struct {
+type BadFriendsHandler struct {
 	redis              *string
 	templateBadFriends *template.Template
 	badFriendsModel    *models.BadFriendsModel
@@ -18,13 +18,13 @@ type pageBadFriends struct {
 	BadFriends template.JS
 }
 
-func NewBadFriendsHandler(redis *string) *badFriendsHandler {
+func NewBadFriendsHandler(redis *string) *BadFriendsHandler {
 	filename := "badfriends.html"
 
 	templateBadFriends := template.Must(template.ParseFiles(filename))
 	badFriendsModel, stopCallback := models.NewBadFriendsModel(*redis)
 
-	return &badFriendsHandler{
+	return &BadFriendsHandler{
 		redis:              redis,
 		templateBadFriends: templateBadFriends,
 		badFriendsModel:    badFriendsModel,
@@ -32,11 +32,11 @@ func NewBadFriendsHandler(redis *string) *badFriendsHandler {
 	}
 }
 
-func (b *badFriendsHandler) Stop() {
+func (b *BadFriendsHandler) Stop() {
 	b.stopCallback()
 }
 
-func (b *badFriendsHandler) Handler(w http.ResponseWriter, r *http.Request) {
+func (b *BadFriendsHandler) Handler(w http.ResponseWriter, _ *http.Request) {
 	p := pageBadFriends{BadFriends: template.JS(b.badFriendsModel.Result())}
 	b.templateBadFriends.Execute(w, p)
 }
